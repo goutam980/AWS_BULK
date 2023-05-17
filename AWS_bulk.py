@@ -17,30 +17,39 @@ if response.status_code != 200:
 INPUT = "accounts.csv"
 
 try:
-    # Open the input CSV file
+    name = "John Doe"
+    aws_access_key_id = "YOUR_AWS_ACCESS_KEY_ID"
+    aws_secret_access_key = "YOUR_AWS_SECRET_ACCESS_KEY"
+
     with open(INPUT, 'r') as csvfile:
-        reader = csv.reader(csvfile)
-        next(reader)  # Skip the header row
-        for row in reader:
-            name, aws_access_key_id, aws_secret_access_key = row
+      reader = csv.reader(csvfile)
+      header = next(reader)  # Read the header row
+      for row in reader:
+        if row:  # Check if the row is not empty
+           if len(row) >= 3:  # Ensure the row has at least 3 elements
+              row[0] = name
+              row[1] = aws_access_key_id
+              row[2] = aws_secret_access_key
+              source_data = {
+                  "source": {
+                      "name": name,
+                      "access_key_id": aws_access_key_id,
+                      "secret_access_key": aws_secret_access_key,
+                      "source_type_id": "aws",
+                      "availability_status": "available"
+                  }
+              }
+              print(source_data)
 
-            # Create AWS source in RHEL Management Application
-            source_data = {
-                "source": {
-                    "name": name,
-                    "access_key_id": aws_access_key_id,
-                    "secret_access_key": aws_secret_access_key,
-                    "source_type_id": "aws",
-                    "availability_status": "available"
-                }
-            }
-
-            response = requests.post('https://console.redhat.com/api/sources/v3.1/sources',
-                                     auth=(USER, PASSWORD), json=source_data)
-            if response.status_code != 201:
-                print(f"Failed to create source for {name}")
-            else:
-                print(f"Source created for {name}")
+           else:
+              print("Invalid row:", row)
+        else:
+          print("Empty row encountered")
+        response = requests.post('https://console.redhat.com/api/sources/v3.1/sources', auth=(USER, PASSWORD), json=source_data)
+        if response.status_code != 201:
+            print(f"Failed to create source for {name}")
+        else:
+            print(f"Source created for {name}")
 
 except FileNotFoundError:
     print(f"{INPUT} not found")
